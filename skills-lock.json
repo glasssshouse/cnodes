@@ -15,6 +15,11 @@
       "source": "0xbigboss/claude-code",
       "sourceType": "github",
       "computedHash": "9866bb48d92a951feafb77f6f48ea39b42c6c1e901788c916d4aad40f60db008"
+    },
+    "typescript-pro": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "1676ebbc84a1d9506b46d7978b91c4bce30d189ac1c619a9e875becd6e1c2c55"
     }
   }
 }
