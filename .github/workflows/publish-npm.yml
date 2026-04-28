@@ -1,4 +1,4 @@
-name: Publish Package To npm
+name: Publish Package And Create Release
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -31,35 +31,138 @@ jobs:
       - name: Validate repository
         run: npm run check
 
-      - name: Check whether package version is already published
-        id: package-version
+      - name: Read package metadata
+        id: package
         run: |
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
-          PUBLISHED_VERSIONS=$(npm view "$PACKAGE_NAME" versions --json 2>/dev/null || echo "[]")
+          echo "name=${PACKAGE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${PACKAGE_VERSION}" >> "$GITHUB_OUTPUT"
+
+          if [[ "$PACKAGE_VERSION" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check whether package version is already published
+        id: package-version
+        run: |
+          PUBLISHED_VERSIONS=$(npm view "${{ steps.package.outputs.name }}" versions --json 2>/dev/null || echo "[]")
           if node -e '
             const versions = JSON.parse(process.argv[1]);
             const normalized = Array.isArray(versions) ? versions : [versions];
             process.exit(normalized.includes(process.argv[2]) ? 0 : 1);
-          ' "$PUBLISHED_VERSIONS" "$PACKAGE_VERSION"; then
+          ' "$PUBLISHED_VERSIONS" "${{ steps.package.outputs.version }}"; then
             echo "published=true" >> "$GITHUB_OUTPUT"
-            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published."
+            echo "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} is already published."
           else
             echo "published=false" >> "$GITHUB_OUTPUT"
-            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is not published yet."
+            echo "${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} is not published yet."
           fi
 
       - name: Publish package
         if: steps.package-version.outputs.published == 'false'
         run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          if [[ "$PACKAGE_VERSION" == *-* ]]; then
-            PACKAGE_TAG=${PACKAGE_VERSION#*-}
-            PACKAGE_TAG=${PACKAGE_TAG%%.*}
-            echo "Publishing prerelease ${PACKAGE_VERSION} with dist-tag ${PACKAGE_TAG}."
-            npm publish --tag "$PACKAGE_TAG"
+          PACKAGE_VERSION="${{ steps.package.outputs.version }}"
+          echo "Publishing ${PACKAGE_VERSION} with dist-tag latest."
+          npm publish --tag latest
+
+      - name: Extract release notes from CHANGELOG.md
+        id: release-notes
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+
+          const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+          const version = process.env.PACKAGE_VERSION;
+          const headings = [`## ${version}`, `## v${version}`];
+
+          let releaseBody = '';
+          for (const heading of headings) {
+            const start = changelog.indexOf(`${heading}\n`);
+            if (start === -1) {
+              continue;
+            }
+
+            const contentStart = start + heading.length + 1;
+            const remaining = changelog.slice(contentStart);
+            const nextHeading = remaining.search(/\n##\s+/);
+            releaseBody = remaining
+              .slice(0, nextHeading === -1 ? undefined : nextHeading)
+              .trim();
+            break;
+          }
+
+          fs.writeFileSync(
+            'release-notes.md',
+            releaseBody
+              ? `# ${version}\n\n${releaseBody}\n`
+              : `# ${version}\n\nNo matching CHANGELOG.md section was found for this package version.\n`,
+          );
+          NODE
+
+          if grep -q "No matching CHANGELOG.md section" release-notes.md; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Publishing stable release ${PACKAGE_VERSION} with the default dist-tag."
-            npm publish
+            echo "found=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Create or update GitHub Release
+        uses: actions/github-script@v7
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+          PACKAGE_PRERELEASE: ${{ steps.package.outputs.prerelease }}
+          CHANGELOG_FOUND: ${{ steps.release-notes.outputs.found }}
+        with:
+          script: |
+            const fs = require('node:fs');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const version = process.env.PACKAGE_VERSION;
+            const tag = `v${version}`;
+            const prerelease = process.env.PACKAGE_PRERELEASE === 'true';
+            const body = fs.readFileSync('release-notes.md', 'utf8');
+            const releasePayload = {
+              owner,
+              repo,
+              tag_name: tag,
+              name: tag,
+              body,
+              prerelease,
+              draft: false,
+              target_commitish: context.sha,
+            };
+
+            if (process.env.CHANGELOG_FOUND !== 'true') {
+              core.warning(`No matching CHANGELOG.md section was found for ${version}. The GitHub Release will include a placeholder note.`);
+            }
+
+            try {
+              const existing = await github.rest.repos.getReleaseByTag({
+                owner,
+                repo,
+                tag,
+              });
+
+              await github.rest.repos.updateRelease({
+                owner,
+                repo,
+                release_id: existing.data.id,
+                tag_name: tag,
+                name: tag,
+                body,
+                prerelease,
+                draft: false,
+              });
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+
+              await github.rest.repos.createRelease(releasePayload);
+            }
