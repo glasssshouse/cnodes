@@ -46,4 +46,14 @@ jobs:
 
       - name: Publish package
         if: steps.package-version.outputs.published == 'false'
-        run: npm publish
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if [[ "$PACKAGE_VERSION" == *-* ]]; then
+            PACKAGE_TAG=${PACKAGE_VERSION#*-}
+            PACKAGE_TAG=${PACKAGE_TAG%%.*}
+            echo "Publishing prerelease ${PACKAGE_VERSION} with dist-tag ${PACKAGE_TAG}."
+            npm publish --tag "$PACKAGE_TAG"
+          else
+            echo "Publishing stable release ${PACKAGE_VERSION} with the default dist-tag."
+            npm publish
+          fi
