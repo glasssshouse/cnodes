@@ -1,10 +1,14 @@
 {
-  "name": "cnodes",
+  "name": "@darbsen/cnodes",
   "version": "0.1.0-alpha.0",
   "description": "Alpha browser-first TypeScript library for interactive node canvases.",
   "license": "ISC",
   "type": "module",
   "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glasssshouse/cnodes.git"
+  },
   "files": [
     "dist"
   ],

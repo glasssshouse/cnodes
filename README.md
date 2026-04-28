@@ -230,7 +230,7 @@ npm run build:demo
 
 The repository also includes a GitHub Pages workflow that deploys the demo on pushes to `main`. In the repository settings, set **Pages** to use **GitHub Actions** as the source.
 
-The package can also be published automatically from GitHub Actions on pushes to `main`. Add an `NPM_TOKEN` repository secret with publish access before relying on that workflow.
+The package can also be published automatically from GitHub Actions on pushes to `main` using npm trusted publishing. Configure a trusted publisher for this repository and the `publish-npm.yml` workflow in npm package settings before relying on that workflow. No long-lived `NPM_TOKEN` secret is required for publishing.
 
 ## Development
 
