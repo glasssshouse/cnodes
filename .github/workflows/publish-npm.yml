@@ -36,7 +36,13 @@ jobs:
         run: |
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+
+          PUBLISHED_VERSIONS=$(npm view "$PACKAGE_NAME" versions --json 2>/dev/null || echo "[]")
+          if node -e '
+            const versions = JSON.parse(process.argv[1]);
+            const normalized = Array.isArray(versions) ? versions : [versions];
+            process.exit(normalized.includes(process.argv[2]) ? 0 : 1);
+          ' "$PUBLISHED_VERSIONS" "$PACKAGE_VERSION"; then
             echo "published=true" >> "$GITHUB_OUTPUT"
             echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published."
           else
