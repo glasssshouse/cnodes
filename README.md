@@ -25,7 +25,7 @@ Intentional limits:
 ## Install
 
 ```bash
-npm install cnodes@0.1.0-alpha.0
+npm i @darbsen/cnodes
 ```
 
 ```ts
