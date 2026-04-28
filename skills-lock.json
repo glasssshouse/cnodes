@@ -6,6 +6,12 @@
       "sourceType": "github",
       "computedHash": "b474e6e47f76ca5fe6537bba30e9a062e6317caf41c239030d766c0e48d33763"
     },
+    "karpathy-guidelines": {
+      "source": "forrestchang/andrej-karpathy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/karpathy-guidelines/SKILL.md",
+      "computedHash": "41e8ca055bbde13d240776a14a076a59614057200340c243130a76ba4e64cac8"
+    },
     "test-driven-development": {
       "source": "obra/superpowers",
       "sourceType": "github",

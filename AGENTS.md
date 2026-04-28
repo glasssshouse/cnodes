@@ -342,6 +342,9 @@ Load the relevant reference only when needed:
 - `patterns.md`
   - use when designing builder patterns, state machines, type-safe APIs
 
+### 6. `kaparthy-guidelines`
+Load the skill always before writing code. Always this is non negotiable.
+
 ---
 
 ## Task-Based Trigger Guide

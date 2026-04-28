@@ -222,6 +222,14 @@ npm run dev
 
 The demo uses the library from `src/` directly and uses Tailwind through the browser CDN in `demo/index.html`.
 
+To build the static demo bundle locally:
+
+```bash
+npm run build:demo
+```
+
+The repository also includes a GitHub Pages workflow that deploys the demo on pushes to `develop`. In the repository settings, set **Pages** to use **GitHub Actions** as the source.
+
 ## Development
 
 ```bash
