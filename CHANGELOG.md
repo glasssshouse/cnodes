@@ -2,9 +2,8 @@
 
 ## Unreleased
 
-## 0.1.0-alpha.1 - 2026-04-28
+## 0.1.1 - 2026-04-28
 
-- Added GitHub Actions automation to publish the package to npm on pushes to `main`, while skipping versions that are already published.
-- Switched npm publishing automation to trusted publishing with GitHub Actions OIDC instead of a long-lived npm token.
-- Changed npm publishing automation to always publish with the `latest` dist-tag, including prereleases.
-- Added GitHub Actions automation to create or update a GitHub Release from the package version and matching changelog section.
+- Promoted the package version from the alpha prerelease line to the stable `0.1.1` release.
+- Added GitHub Actions automation to publish to npm and create matching GitHub Releases from `CHANGELOG.md`.
+- Changed publishing so new releases are published with the `latest` dist-tag.
