@@ -3,6 +3,7 @@ import type { CANVAS_THEME_PRESET_NAMES } from '../theme/presets';
 export type CanvasShape = 'circle' | 'rect';
 export type CanvasLineStyle = 'straight' | 'bezier';
 export type CanvasArrowStyle = 'none' | 'end' | 'start' | 'both';
+export type CanvasPortSide = 'left' | 'right' | 'top' | 'bottom';
 export type CanvasConnectionStrokeStyle =
   | 'solid'
   | 'dashed'
@@ -59,7 +60,9 @@ export type CanvasConnectionStyleOptions = Readonly<{
 
 export type CanvasConnectionOptions = Readonly<{
   label?: string;
+  sourcePort?: string;
   style?: CanvasConnectionStyleOptions;
+  targetPort?: string;
 }>;
 
 export type CanvasGraphOptions = Readonly<{
@@ -89,8 +92,10 @@ export type CanvasGraphOptions = Readonly<{
 export type CanvasConnection = Readonly<{
   id: string;
   label?: string;
+  sourcePortId?: string;
   sourceNodeId: string;
   style: CanvasConnectionStyle;
+  targetPortId?: string;
   targetNodeId: string;
 }>;
 
@@ -140,11 +145,21 @@ export type CanvasNode = Readonly<{
   height: number;
   id: string;
   kind: string;
+  ports?: readonly CanvasNodePort[];
   shape: CanvasShape;
   title: string;
   width: number;
   x: number;
   y: number;
+}>;
+
+export type CanvasNodePort = Readonly<{
+  id: string;
+  side: CanvasPortSide;
+}>;
+
+export type CanvasNodePortOptions = Readonly<{
+  side: CanvasPortSide;
 }>;
 
 export type CanvasNodeRef = CanvasNode | string;

@@ -1,4 +1,4 @@
-import type { CanvasLineStyle, CanvasNode } from '../types/public';
+import type { CanvasLineStyle, CanvasNode, CanvasNodePort } from '../types/public';
 
 export const NODE_RECTANGLE_RADIUS = 18;
 export const NODE_PORT_RADIUS = 5;
@@ -35,6 +35,10 @@ export function resolveConnectionPath(
   targetNode: CanvasNode,
   lineStyle: CanvasLineStyle,
   portsVisible = false,
+  explicitPorts?: Readonly<{
+    sourcePort?: CanvasNodePort;
+    targetPort?: CanvasNodePort;
+  }>,
 ): ConnectionPath {
   const dx = targetNode.x - sourceNode.x;
   const dy = targetNode.y - sourceNode.y;
@@ -55,8 +59,14 @@ export function resolveConnectionPath(
     } as ConnectionPath;
   }
 
-  if (portsVisible) {
-    const { sourcePort, targetPort } = resolveAutomaticPorts(sourceNode, targetNode);
+  if (portsVisible || explicitPorts?.sourcePort || explicitPorts?.targetPort) {
+    const automaticPorts = resolveAutomaticPorts(sourceNode, targetNode);
+    const sourcePort = explicitPorts?.sourcePort
+      ? getNodePortAnchor(sourceNode, explicitPorts.sourcePort.side)
+      : automaticPorts.sourcePort;
+    const targetPort = explicitPorts?.targetPort
+      ? getNodePortAnchor(targetNode, explicitPorts.targetPort.side)
+      : automaticPorts.targetPort;
 
     if (lineStyle === 'straight') {
       return {

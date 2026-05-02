@@ -150,6 +150,57 @@ describe('connections', () => {
     expect(connection.label).toBe('cache hit');
   });
 
+  it('stores explicit source and target port ids from connect options', () => {
+    const context = createMockContext();
+    stubCanvasContext(context);
+
+    const graph = new CanvasGraph('app');
+    const source = graph
+      .createNode('source')
+      .id('source')
+      .port('out', { side: 'right' })
+      .done();
+    const target = graph
+      .createNode('target')
+      .id('target')
+      .port('in', { side: 'left' })
+      .done();
+
+    const connection = graph.connect(source, target, {
+      sourcePort: 'out',
+      targetPort: 'in',
+    });
+
+    expect(connection.sourcePortId).toBe('out');
+    expect(connection.targetPortId).toBe('in');
+  });
+
+  it('throws when a source port does not exist on the source node', () => {
+    const context = createMockContext();
+    stubCanvasContext(context);
+
+    const graph = new CanvasGraph('app');
+    const source = graph.createNode('source').id('source').done();
+    const target = graph.createNode('target').id('target').done();
+
+    expect(() => graph.connect(source, target, {
+      sourcePort: 'missing',
+    })).toThrowError('Source port "missing" does not exist on node "source".');
+  });
+
+  it('throws when a target port does not exist on the target node', () => {
+    const context = createMockContext();
+    stubCanvasContext(context);
+
+    const graph = new CanvasGraph('app');
+    const source = graph.createNode('source').id('source').done();
+    const target = graph.createNode('target').id('target').done();
+
+    expect(() => graph.connect(source, target, {
+      targetPort: 'missing',
+    })).toThrowError('Target port "missing" does not exist on node "target".');
+  });
+
   it('does not store whitespace-only connection labels', () => {
     const context = createMockContext();
     stubCanvasContext(context);

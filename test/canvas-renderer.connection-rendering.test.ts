@@ -235,6 +235,37 @@ describe('canvas rendering', () => {
     expect(context.arc).toHaveBeenNthCalledWith(2, 100, 270, 5, 0, Math.PI * 2);
   });
 
+  it('anchors connections to explicit named ports when provided', () => {
+    const context = createMockContext();
+    stubCanvasContext(context);
+
+    const graph = new CanvasGraph('app');
+    const source = graph
+      .createNode('source')
+      .at(100, 120)
+      .port('out', { side: 'top' })
+      .done();
+    const target = graph
+      .createNode('target')
+      .at(280, 120)
+      .port('in', { side: 'bottom' })
+      .done();
+
+    vi.clearAllMocks();
+    graph.connect(source, target, {
+      sourcePort: 'out',
+      targetPort: 'in',
+    });
+
+    const [startX, startY] = vi.mocked(context.moveTo).mock.calls[0] ?? [];
+    const [endX, endY] = vi.mocked(context.lineTo).mock.calls[0] ?? [];
+
+    expect(startX).toBeCloseTo(100, 2);
+    expect(startY).toBeCloseTo(90, 2);
+    expect(endX).toBeCloseTo(280, 2);
+    expect(endY).toBeCloseTo(150, 2);
+  });
+
   it('anchors diagonal straight connections to the rounded rect outline', () => {
     const context = createMockContext();
     stubCanvasContext(context);

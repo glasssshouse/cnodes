@@ -5,10 +5,30 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      npm_tag:
+        description: npm dist-tag to publish with
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - next
+          - beta
+          - alpha
+      skip_publish:
+        description: Validate and create/update the GitHub Release without publishing to npm
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   id-token: write
   contents: write
+
+concurrency:
+  group: publish-npm-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -63,11 +83,13 @@ jobs:
           fi
 
       - name: Publish package
-        if: steps.package-version.outputs.published == 'false'
+        if: steps.package-version.outputs.published == 'false' && inputs.skip_publish != true
+        env:
+          NPM_DIST_TAG: ${{ inputs.npm_tag || 'latest' }}
         run: |
           PACKAGE_VERSION="${{ steps.package.outputs.version }}"
-          echo "Publishing ${PACKAGE_VERSION} with dist-tag latest."
-          npm publish --tag latest
+          echo "Publishing ${PACKAGE_VERSION} with dist-tag ${NPM_DIST_TAG}."
+          npm publish --tag "${NPM_DIST_TAG}"
 
       - name: Extract release notes from CHANGELOG.md
         id: release-notes

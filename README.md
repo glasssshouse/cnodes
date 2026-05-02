@@ -11,14 +11,13 @@ Alpha browser-first TypeScript library for interactive node canvases.
 Supported in this alpha:
 
 - create nodes with stable ids, labels, descriptions, colors, and shapes
-- connect nodes with straight or bezier lines, arrows, labels, and animated stroke styles
+- connect nodes with straight or bezier lines, arrows, labels, named ports, and animated stroke styles
 - send packets across direct, shortest-path, and waypoint-constrained routes
 - dispatch serializable packet actions from external event systems
 - persist dragged node positions and enable visible automatic ports
 
 Intentional limits:
 
-- named ports or connect-to-specific-port APIs
 - packet payload modeling
 - editor mutation features like delete, reconnect, or pointer-driven edge creation
 
@@ -51,6 +50,7 @@ const ingress = graph
   .description('Receives external events.')
   .at(120, 180)
   .size(156, 72)
+  .port('out', { side: 'right' })
   .done();
 
 const target = graph
@@ -60,10 +60,13 @@ const target = graph
   .description('Receives packets.')
   .at(420, 180)
   .size(156, 72)
+  .port('in', { side: 'left' })
   .done();
 
 graph.connect(ingress, target, {
   label: 'primary',
+  sourcePort: 'out',
+  targetPort: 'in',
 });
 
 graph.send('ingress', 'target');
@@ -136,7 +139,32 @@ Graph-wide defaults for packet rendering. Use `radius`, `trail`, and `trailLengt
 
 `ports`
 
-Set `ports.visible` to `true` to render automatically selected ports based on the committed connection layout.
+Set `ports.visible` to `true` to render used endpoint ports. Without explicit port names, endpoints are selected automatically from the committed connection layout.
+
+### Named Ports
+
+Use `.port(id, { side })` when a node needs stable connection endpoints:
+
+```ts
+const source = graph
+  .createNode('source')
+  .id('source')
+  .port('out', { side: 'right' })
+  .done();
+
+const target = graph
+  .createNode('target')
+  .id('target')
+  .port('in', { side: 'left' })
+  .done();
+
+graph.connect(source, target, {
+  sourcePort: 'out',
+  targetPort: 'in',
+});
+```
+
+Named ports are fixed side anchors. `ports.visible` controls whether used endpoint dots are drawn; explicit port routing still works when port dots are hidden.
 
 `layoutPersistence`
 
@@ -150,6 +178,7 @@ Use `theme.preset` for a built-in palette or `theme.tokens` to override individu
 
 - `createNode(kind)` returns a fluent builder and `.done()` commits the node.
 - `connect(...)` and `send(...)` accept either committed nodes or node ids.
+- Define named ports with `.port(id, { side })`, then route connections with `sourcePort` and `targetPort`.
 - `send(...)` uses the shortest directed path by default, throws when no path exists, and accepts `via` to force intermediate nodes in order.
 
 ### `layoutPersistence`
@@ -220,7 +249,7 @@ npm install
 npm run dev
 ```
 
-The demo uses the library from `src/` directly and uses Tailwind through the browser CDN in `demo/index.html`.
+The demo uses the library from `src/` directly, demonstrates named ports on the graph routes, and uses Tailwind through the browser CDN in `demo/index.html`.
 
 To build the static demo bundle locally:
 
@@ -241,15 +270,39 @@ npm run test:run
 npm run build
 ```
 
-Before publishing:
+Before publishing or opening a PR:
 
 ```bash
 npm run check
 ```
 
+### Release Automation
+
+Publishing stays in GitHub Actions through npm trusted publishing. The local release script prepares version files and changelog entries, but it does not commit, tag, push, or publish.
+
+```bash
+npm run release:prepare -- patch --yes
+npm run release:prepare -- minor --yes
+npm run release:prepare -- preminor --preid beta --yes
+```
+
+Useful options:
+
+- `--dry-run`: show the next version without writing files
+- `--allow-dirty`: allow release prep with uncommitted changes
+- `--allow-empty`: create a release section even when `Unreleased` has no entries
+- `--dispatch`: trigger the publish workflow after release prep
+
+To trigger publishing for the current ref without changing files:
+
+```bash
+npm run release:dispatch
+```
+
+`release:dispatch` requires the GitHub CLI (`gh`) and runs `.github/workflows/publish-npm.yml`. Configure npm trusted publishing for this repository before relying on the workflow.
+
 ## Intentional Limits
 
-- No named ports or connect-to-specific-port API yet
 - No packet payload model yet
 - No editor mutation API for deleting, reconnecting, or creating nodes through pointer gestures
 - Connection labels are visual annotations, not interactive targets

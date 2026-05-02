@@ -30,11 +30,13 @@
 - Packet receive highlights for important sends
 - Transport-agnostic inbound graph actions for external event streams
 - Packet routing through required waypoint nodes
+- Named ports and connect-to-specific-port API
+- Release preparation script and CI workflow improvements
 - Documentation and usage examples
 
 ## Next
 
-- Named ports and connect-to-specific-port API
+- Packet payload model for sent packets and graph actions
 
 ## Later
 

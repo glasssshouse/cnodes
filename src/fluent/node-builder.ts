@@ -1,5 +1,9 @@
 import type { CanvasNodeDraft } from '../types/internal';
-import type { CanvasNode, CanvasShape } from '../types/public';
+import type {
+  CanvasNode,
+  CanvasNodePortOptions,
+  CanvasShape,
+} from '../types/public';
 
 const DEFAULT_CIRCLE_SIZE = 48;
 const DEFAULT_RECTANGLE_HEIGHT = 60;
@@ -49,6 +53,30 @@ export class NodeBuilder {
     return this;
   }
 
+  port(id: string, options: CanvasNodePortOptions): this {
+    const normalizedId = normalizePortId(id);
+
+    if (!normalizedId) {
+      throw new Error('Node port id must be a non-empty string.');
+    }
+
+    const ports = this.#draft.ports ?? [];
+
+    if (ports.some((port) => port.id === normalizedId)) {
+      throw new Error(`Node port id "${normalizedId}" is already defined.`);
+    }
+
+    this.#draft.ports = [
+      ...ports,
+      {
+        id: normalizedId,
+        side: options.side,
+      },
+    ];
+
+    return this;
+  }
+
   description(description: string): this {
     this.#draft.description = description;
 
@@ -89,7 +117,9 @@ export class NodeBuilder {
 
 export type { CanvasShape };
 
-function getDefaultNodeSize(shape: CanvasShape): Pick<CanvasNodeDraft, 'height' | 'width'> {
+function getDefaultNodeSize(
+  shape: CanvasShape,
+): Pick<CanvasNodeDraft, 'height' | 'width'> {
   if (shape === 'circle') {
     return {
       height: DEFAULT_CIRCLE_SIZE,
@@ -101,4 +131,10 @@ function getDefaultNodeSize(shape: CanvasShape): Pick<CanvasNodeDraft, 'height' 
     height: DEFAULT_RECTANGLE_HEIGHT,
     width: DEFAULT_RECTANGLE_WIDTH,
   };
+}
+
+function normalizePortId(id: string): string | undefined {
+  const normalizedId = id.trim();
+
+  return normalizedId ? normalizedId : undefined;
 }

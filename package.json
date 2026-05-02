@@ -37,6 +37,8 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "check": "npm run lint && npm run typecheck && npm run test:run && npm run build",
+    "release:prepare": "node scripts/release.mjs prepare",
+    "release:dispatch": "node scripts/release.mjs dispatch",
     "prepublishOnly": "npm run check"
   },
   "devDependencies": {

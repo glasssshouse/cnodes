@@ -100,6 +100,32 @@ describe('node builder', () => {
     expect(node.id).toBe('source-node');
   });
 
+  it('commits named node ports with fixed sides', () => {
+    const graph = new CanvasGraph('app');
+
+    const node = graph
+      .createNode('source')
+      .port('ingress', { side: 'left' })
+      .port('egress', { side: 'right' })
+      .done();
+
+    expect(node.ports).toEqual([
+      { id: 'ingress', side: 'left' },
+      { id: 'egress', side: 'right' },
+    ]);
+  });
+
+  it('throws when adding duplicate named ports to one node', () => {
+    const graph = new CanvasGraph('app');
+
+    expect(() => {
+      graph
+        .createNode('source')
+        .port('ingress', { side: 'left' })
+        .port('ingress', { side: 'right' });
+    }).toThrowError('Node port id "ingress" is already defined.');
+  });
+
   it('grows node height when wrapped title text needs more vertical space', () => {
     const graph = new CanvasGraph('app');
 

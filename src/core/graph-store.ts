@@ -40,6 +40,7 @@ type StoredNode = {
   height: number;
   id: string;
   kind: string;
+  ports?: NonNullable<CanvasNode['ports']>;
   shape: CanvasNode['shape'];
   title: string;
   width: number;

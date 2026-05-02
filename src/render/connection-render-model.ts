@@ -58,9 +58,18 @@ export class ConnectionRenderCache {
     targetNode: CanvasNode,
     portsVisible = false,
   ): ConnectionRenderModel {
+    const explicitPorts = resolveExplicitPorts(
+      connection,
+      sourceNode,
+      targetNode,
+    );
     const resolvedPorts = portsVisible
       ? resolveAutomaticPorts(sourceNode, targetNode)
       : null;
+    const sourcePortSide =
+      explicitPorts.sourcePort?.side ?? resolvedPorts?.sourcePort.side;
+    const targetPortSide =
+      explicitPorts.targetPort?.side ?? resolvedPorts?.targetPort.side;
     const signature = [
       sourceNode.x,
       sourceNode.y,
@@ -74,8 +83,8 @@ export class ConnectionRenderCache {
       targetNode.shape,
       connection.style.line,
       connection.style.arrow,
-      portsVisible ? resolvedPorts?.sourcePort.side : 'free',
-      portsVisible ? resolvedPorts?.targetPort.side : 'free',
+      sourcePortSide ?? 'free',
+      targetPortSide ?? 'free',
     ].join('|');
     const cachedModel = this.#cache.get(connection.id);
 
@@ -92,30 +101,48 @@ export class ConnectionRenderCache {
       };
     }
 
-    const path = resolveConnectionPath(sourceNode, targetNode, connection.style.line, portsVisible);
+    const path = resolveConnectionPath(
+      sourceNode,
+      targetNode,
+      connection.style.line,
+      portsVisible,
+      explicitPorts,
+    );
     const visiblePath = getVisiblePath(path, connection.style.arrow);
     const routePoints = sampleConnectionPath(visiblePath);
-    const sourcePort = resolvedPorts
+    const sourcePortAnchor = explicitPorts.sourcePort
       ? {
           nodeId: connection.sourceNodeId,
-          point: resolvedPorts.sourcePort.point,
-          side: resolvedPorts.sourcePort.side,
+          point: path.start,
+          side: explicitPorts.sourcePort.side,
         }
-      : null;
-    const targetPort = resolvedPorts
+      : resolvedPorts
+        ? {
+            nodeId: connection.sourceNodeId,
+            point: resolvedPorts.sourcePort.point,
+            side: resolvedPorts.sourcePort.side,
+          }
+        : null;
+    const targetPortAnchor = explicitPorts.targetPort
       ? {
           nodeId: connection.targetNodeId,
-          point: resolvedPorts.targetPort.point,
-          side: resolvedPorts.targetPort.side,
+          point: path.end,
+          side: explicitPorts.targetPort.side,
         }
-      : null;
+      : resolvedPorts
+        ? {
+            nodeId: connection.targetNodeId,
+            point: resolvedPorts.targetPort.point,
+            side: resolvedPorts.targetPort.side,
+          }
+        : null;
 
     this.#cache.set(connection.id, {
       path,
       routePoints,
-      sourcePort,
+      sourcePort: sourcePortAnchor,
       signature,
-      targetPort,
+      targetPort: targetPortAnchor,
       visiblePath,
     });
 
@@ -123,10 +150,10 @@ export class ConnectionRenderCache {
       id: connection.id,
       path,
       routePoints,
-      sourcePort,
+      sourcePort: sourcePortAnchor,
       signature,
       sourceNodeId: connection.sourceNodeId,
-      targetPort,
+      targetPort: targetPortAnchor,
       visiblePath,
     };
   }
@@ -266,6 +293,27 @@ function sampleConnectionPath(path: ConnectionPath): Point[] {
   }
 
   return samples;
+}
+
+function resolveExplicitPorts(
+  connection: CanvasConnection,
+  sourceNode: CanvasNode,
+  targetNode: CanvasNode,
+): Readonly<{
+  sourcePort?: NonNullable<CanvasNode['ports']>[number];
+  targetPort?: NonNullable<CanvasNode['ports']>[number];
+}> {
+  const sourcePort = connection.sourcePortId
+    ? sourceNode.ports?.find((port) => port.id === connection.sourcePortId)
+    : undefined;
+  const targetPort = connection.targetPortId
+    ? targetNode.ports?.find((port) => port.id === connection.targetPortId)
+    : undefined;
+
+  return {
+    ...(sourcePort ? { sourcePort } : {}),
+    ...(targetPort ? { targetPort } : {}),
+  };
 }
 
 function trimBezierEnd(

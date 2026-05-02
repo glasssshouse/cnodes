@@ -96,6 +96,7 @@ export function buildDemoGraph(
     .description('Receives external events.')
     .at(80, 220)
     .size(132, 64)
+    .port('out', { side: 'right' })
     .done();
 
   const router = graph
@@ -105,6 +106,8 @@ export function buildDemoGraph(
     .description('Finds directed routes.')
     .at(220, 220)
     .size(132, 64)
+    .port('in', { side: 'left' })
+    .port('out', { side: 'right' })
     .done();
 
   const balancer = graph
@@ -114,6 +117,9 @@ export function buildDemoGraph(
     .description('Splits traffic paths.')
     .at(380, 220)
     .size(144, 64)
+    .port('in', { side: 'left' })
+    .port('cache-out', { side: 'top' })
+    .port('worker-out', { side: 'bottom' })
     .done();
 
   const cache = graph
@@ -123,6 +129,8 @@ export function buildDemoGraph(
     .description('Fast route waypoint.')
     .at(560, 130)
     .size(136, 64)
+    .port('in', { side: 'left' })
+    .port('out', { side: 'right' })
     .done();
 
   const worker = graph
@@ -132,6 +140,8 @@ export function buildDemoGraph(
     .description('Full processing path.')
     .at(560, 310)
     .size(136, 64)
+    .port('in', { side: 'left' })
+    .port('out', { side: 'right' })
     .done();
 
   const target = graph
@@ -141,59 +151,73 @@ export function buildDemoGraph(
     .description('Receives packets.')
     .at(740, 220)
     .size(136, 64)
+    .port('cache-in', { side: 'top' })
+    .port('worker-in', { side: 'bottom' })
     .done();
 
   graph.connect(ingress, router, {
     label: 'ingress',
+    sourcePort: 'out',
     style: {
       arrow: 'end',
       color: '#2563eb',
       stroke: resolveDemoStroke('dashed', options.animatedConnections),
     },
+    targetPort: 'in',
   });
   graph.connect(router, balancer, {
     label: 'route',
+    sourcePort: 'out',
     style: {
       arrow: 'both',
       color: '#f59e0b',
       line: 'bezier',
       stroke: resolveDemoStroke('animated', options.animatedConnections),
     },
+    targetPort: 'in',
   });
   graph.connect(balancer, cache, {
     label: 'cache',
+    sourcePort: 'cache-out',
     style: {
       arrow: 'end',
       color: '#0891b2',
       line: 'bezier',
       stroke: resolveDemoStroke('dotted', options.animatedConnections),
     },
+    targetPort: 'in',
   });
   graph.connect(balancer, worker, {
     label: 'worker',
+    sourcePort: 'worker-out',
     style: {
       arrow: 'start',
       color: '#7c3aed',
       line: 'straight',
       stroke: resolveDemoStroke('animated-dotted', options.animatedConnections),
     },
+    targetPort: 'in',
   });
   graph.connect(cache, target, {
     label: 'fast path',
+    sourcePort: 'out',
     style: {
       color: '#0f766e',
       line: 'straight',
       stroke: resolveDemoStroke('solid', options.animatedConnections),
     },
+    targetPort: 'cache-in',
   });
   graph.connect(worker, target, {
     label: 'complete',
+    sourcePort: 'out',
     style: {
       arrow: 'end',
       color: '#0f766e',
       line: 'bezier',
       stroke: resolveDemoStroke('animated', options.animatedConnections),
     },
+    targetPort: 'worker-in',
   });
 
   return {

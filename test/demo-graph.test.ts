@@ -57,6 +57,34 @@ describe('demo graph', () => {
     expect(context.arc).toHaveBeenCalled();
   });
 
+  it('uses named ports for demo node routing', () => {
+    document.body.innerHTML = '<div id="app"></div>';
+    const graphMount = document.querySelector<HTMLDivElement>('#app');
+
+    if (!graphMount) {
+      throw new Error('Expected demo root.');
+    }
+
+    const context = createMockContext();
+
+    stubCanvasContext(context);
+
+    const demoGraph = buildDemoGraph(graphMount, {
+      animatedConnections: true,
+      onRenderStats: vi.fn(),
+      packetTrails: false,
+      portsVisible: false,
+      themePreset: 'default',
+    });
+
+    expect(demoGraph.balancer.ports).toEqual([
+      { id: 'in', side: 'left' },
+      { id: 'cache-out', side: 'top' },
+      { id: 'worker-out', side: 'bottom' },
+    ]);
+    expect(vi.mocked(context.moveTo).mock.calls).toContainEqual([380, 188]);
+  });
+
   it('renders connection labels in the demo graph', () => {
     document.body.innerHTML = '<div id="app"></div>';
     const graphMount = document.querySelector<HTMLDivElement>('#app');

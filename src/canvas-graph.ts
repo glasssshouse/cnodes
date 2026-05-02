@@ -107,11 +107,27 @@ export class CanvasGraph {
     }
 
     const label = normalizeConnectionLabel(options.label);
+    const sourcePortId = normalizePortId(options.sourcePort);
+    const targetPortId = normalizePortId(options.targetPort);
+
+    if (sourcePortId && !hasNodePort(sourceNode, sourcePortId)) {
+      throw new Error(
+        `Source port "${sourcePortId}" does not exist on node "${sourceNode.id}".`,
+      );
+    }
+
+    if (targetPortId && !hasNodePort(targetNode, targetPortId)) {
+      throw new Error(
+        `Target port "${targetPortId}" does not exist on node "${targetNode.id}".`,
+      );
+    }
 
     return this.#commitConnection({
       ...(label ? { label } : {}),
+      ...(sourcePortId ? { sourcePortId } : {}),
       sourceNodeId: sourceNode.id,
       style: resolveConnectionStyle(this.#defaultConnectionStyle, options),
+      ...(targetPortId ? { targetPortId } : {}),
       targetNodeId: targetNode.id,
     });
   }
@@ -558,6 +574,16 @@ function normalizeConnectionLabel(
   const normalizedLabel = label?.trim();
 
   return normalizedLabel ? normalizedLabel : undefined;
+}
+
+function normalizePortId(portId: string | undefined): string | undefined {
+  const normalizedPortId = portId?.trim();
+
+  return normalizedPortId ? normalizedPortId : undefined;
+}
+
+function hasNodePort(node: CanvasNode, portId: string): boolean {
+  return node.ports?.some((port) => port.id === portId) ?? false;
 }
 
 function resolveActionSendOptions(
