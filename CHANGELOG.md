@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.2 - 2026-05-02
+
 - Added named node ports with `.port(id, { side })` and `connect(..., { sourcePort, targetPort })`.
 - Updated the demo graph to use named ports for explicit route endpoints.
 - Added CI validation and release helper scripts for version, changelog, and publish workflow dispatch.
