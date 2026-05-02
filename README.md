@@ -1,12 +1,12 @@
 # cnodes
 
-Alpha browser-first TypeScript library for interactive node canvases.
+Browser-first TypeScript library for interactive node canvases.
 
 `cnodes` lets you create nodes, connect them, and animate packets through the graph. It is framework-agnostic and renders into a managed `<canvas>` inside a target element.
 
-## Alpha Status
+## Package Status
 
-`0.1.0-alpha.0` is the first public alpha. The current API is ready for early use and feedback, but it is not a finalized `1.0` contract yet.
+`0.1.1` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet.
 
 Supported in this alpha:
 
@@ -28,13 +28,13 @@ npm i @darbsen/cnodes
 ```
 
 ```ts
-import { CanvasGraph } from 'cnodes';
+import { CanvasGraph } from '@darbsen/cnodes';
 ```
 
 ## Quick Start
 
 ```ts
-import { CanvasGraph } from 'cnodes';
+import { CanvasGraph } from '@darbsen/cnodes';
 
 const graph = new CanvasGraph('#app', {
   connection: {
@@ -293,7 +293,19 @@ Useful options:
 - `--allow-empty`: create a release section even when `Unreleased` has no entries
 - `--dispatch`: trigger the publish workflow after release prep
 
-To trigger publishing for the current ref without changing files:
+Recommended release flow:
+
+```bash
+npm run release:prepare -- patch --yes
+npm run check
+npm run build:demo
+git diff
+git add package.json package-lock.json CHANGELOG.md
+git commit -m "chore: prepare release"
+git push
+```
+
+To trigger publishing for the current ref without changing files, after the release prep commit is pushed:
 
 ```bash
 npm run release:dispatch
