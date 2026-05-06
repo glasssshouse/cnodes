@@ -95,6 +95,20 @@ export function promoteUnreleasedChangelog(
   ].join('\n');
 }
 
+export function updateReadmeVersion(readme, version) {
+  const statusVersionPattern =
+    /`(\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+\.\d+)?)` is an early public release\./;
+
+  if (!statusVersionPattern.test(readme)) {
+    throw new Error('README.md package status version marker was not found.');
+  }
+
+  return readme.replace(
+    statusVersionPattern,
+    `\`${version}\` is an early public release.`,
+  );
+}
+
 function parseVersion(version) {
   const match = version.match(
     /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+)\.(\d+))?$/,
@@ -220,6 +234,8 @@ function prepareRelease(options) {
     getToday(),
     { allowEmpty: options.allowEmpty },
   );
+  const readme = readFileSync('README.md', 'utf8');
+  const nextReadme = updateReadmeVersion(readme, nextVersion);
 
   if (options.dryRun) {
     console.log(`Would prepare ${packageJson.name}@${nextVersion}.`);
@@ -234,6 +250,7 @@ function prepareRelease(options) {
 
   run('npm', ['version', nextVersion, '--no-git-tag-version']);
   writeFileSync('CHANGELOG.md', nextChangelog);
+  writeFileSync('README.md', nextReadme);
   console.log(`Prepared ${packageJson.name}@${nextVersion}.`);
 
   if (options.dispatch) {
@@ -253,7 +270,12 @@ function dispatchPublishWorkflow() {
 }
 
 function ensureRepositoryFiles() {
-  for (const file of ['package.json', 'package-lock.json', 'CHANGELOG.md']) {
+  for (const file of [
+    'package.json',
+    'package-lock.json',
+    'CHANGELOG.md',
+    'README.md',
+  ]) {
     if (!existsSync(file)) {
       throw new Error(`Expected ${file} in the current working directory.`);
     }

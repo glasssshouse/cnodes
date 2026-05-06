@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-// @ts-expect-error The release helper is a Node ESM script, not TS source.
-import { computeNextVersion, promoteUnreleasedChangelog } from '../scripts/release.mjs';
+import {
+  computeNextVersion,
+  promoteUnreleasedChangelog,
+  updateReadmeVersion,
+} from '../scripts/release.mjs';
 
 describe('release script helpers', () => {
   it('computes stable semver bumps', () => {
@@ -61,6 +64,32 @@ describe('release script helpers', () => {
 
     expect(() => promoteUnreleasedChangelog(changelog, '0.1.2', '2026-05-02')).toThrowError(
       'CHANGELOG.md has no Unreleased entries.',
+    );
+  });
+
+  it('updates the README package status version', () => {
+    const readme = [
+      '# cnodes',
+      '',
+      '## Package Status',
+      '',
+      '`0.1.1` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet.',
+      '',
+    ].join('\n');
+
+    expect(updateReadmeVersion(readme, '0.1.2')).toBe([
+      '# cnodes',
+      '',
+      '## Package Status',
+      '',
+      '`0.1.2` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet.',
+      '',
+    ].join('\n'));
+  });
+
+  it('throws when the README package status version marker is missing', () => {
+    expect(() => updateReadmeVersion('# cnodes\n', '0.1.2')).toThrowError(
+      'README.md package status version marker was not found.',
     );
   });
 });

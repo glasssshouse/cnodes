@@ -1,0 +1,15 @@
+{
+  "packages": {
+    ".": {
+      "extra-files": [
+        {
+          "path": "README.md",
+          "type": "generic"
+        }
+      ],
+      "include-component-in-tag": false,
+      "package-name": "@darbsen/cnodes",
+      "release-type": "node"
+    }
+  }
+}

@@ -6,7 +6,7 @@ Browser-first TypeScript library for interactive node canvases.
 
 ## Package Status
 
-`0.1.1` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet.
+`0.1.2` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet. <!-- x-release-please-version -->
 
 Supported in this alpha:
 
@@ -278,7 +278,17 @@ npm run check
 
 ### Release Automation
 
-Publishing stays in GitHub Actions through npm trusted publishing. The local release script prepares version files and changelog entries, but it does not commit, tag, push, or publish.
+Release Please creates release pull requests from Conventional Commit messages. Those pull requests update package versions, `CHANGELOG.md`, and the README package status. When a Release Please PR is merged, Release Please creates the GitHub Release and the existing npm workflow publishes the already-versioned package through trusted publishing.
+
+Use commit prefixes consistently so Release Please can calculate the right version:
+
+```bash
+feat: add packet payload model
+fix: correct packet route validation
+docs: update port examples
+```
+
+The local release script remains available as a manual fallback. It prepares version files, the README package status, and changelog entries, but it does not commit, tag, push, or publish.
 
 ```bash
 npm run release:prepare -- patch --yes
@@ -293,7 +303,7 @@ Useful options:
 - `--allow-empty`: create a release section even when `Unreleased` has no entries
 - `--dispatch`: trigger the publish workflow after release prep
 
-Recommended release flow:
+Manual fallback release flow:
 
 ```bash
 npm run release:prepare -- patch --yes

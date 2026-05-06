@@ -32,6 +32,7 @@
 - Packet routing through required waypoint nodes
 - Named ports and connect-to-specific-port API
 - Release preparation script and CI workflow improvements
+- Release Please automation for changelog and release pull requests
 - Documentation and usage examples
 
 ## Next

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Updated release preparation to keep the README package status version aligned with `package.json`.
+- Added Release Please configuration to generate changelog entries and release pull requests from Conventional Commits.
+
 ## 0.1.2 - 2026-05-02
 
 - Added named node ports with `.port(id, { side })` and `connect(..., { sourcePort, targetPort })`.
