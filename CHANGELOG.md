@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-05-09
+
+- Added shift-click node selection so multiple selected nodes can be dragged together.
+- Updated layout persistence to save every explicit-id node moved by a selected group drag.
+
 ## 0.2.0 - 2026-05-09
 
 - Added opt-in bidirectional packet travel with `connect(..., { travel: 'both' })`.

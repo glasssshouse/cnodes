@@ -50,6 +50,7 @@ export class CanvasGraph {
   readonly #layoutPersistence: LayoutPersistenceController | null;
   readonly #onRenderStats: ((sample: CanvasRenderStatsSample) => void) | null;
   readonly #renderer: CanvasRenderer;
+  readonly #selectedNodeIds = new Set<string>();
   readonly #teardownResizeObservation: () => void;
   readonly #theme = resolveCanvasTheme({});
 
@@ -285,6 +286,7 @@ export class CanvasGraph {
       connectionDashOffset: this.#connectionDashOffset,
       hoveredNodeId: this.#hoveredNodeId,
       nodeHighlights: this.#getRenderableNodeHighlights(renderTimestamp),
+      selectedNodeIds: [...this.#selectedNodeIds],
     });
     this.#onRenderStats?.({
       animatedConnections: this.#graphStore.hasAnimatedConnections(),
@@ -386,13 +388,41 @@ export class CanvasGraph {
 
     if (!targetNode) {
       this.#dragController.cancel();
+      if (this.#selectedNodeIds.size > 0) {
+        this.#selectedNodeIds.clear();
+        this.#render();
+      }
       return;
     }
 
-    const shouldRender = this.#hoveredNodeId !== targetNode.id;
+    if (event.shiftKey) {
+      if (this.#selectedNodeIds.has(targetNode.id)) {
+        this.#selectedNodeIds.delete(targetNode.id);
+      } else {
+        this.#selectedNodeIds.add(targetNode.id);
+      }
+
+      this.#hoveredNodeId = targetNode.id;
+      this.#render();
+      return;
+    }
+
+    const hadSelectedNodes = this.#selectedNodeIds.size > 0;
+    const isDraggingSelectedNode = this.#selectedNodeIds.has(targetNode.id);
+    const dragNodes = isDraggingSelectedNode
+      ? this.#getSelectedDragNodes(targetNode)
+      : [targetNode];
+
+    if (!isDraggingSelectedNode) {
+      this.#selectedNodeIds.clear();
+    }
+
+    const shouldRender =
+      this.#hoveredNodeId !== targetNode.id ||
+      (hadSelectedNodes && !isDraggingSelectedNode);
 
     this.#hoveredNodeId = targetNode.id;
-    this.#dragController.beginDrag(targetNode, point, event);
+    this.#dragController.beginDrag(dragNodes, point, event);
 
     window.addEventListener('pointermove', this.#handlePointerMove);
     window.addEventListener('pointerup', this.#handlePointerUp);
@@ -411,26 +441,32 @@ export class CanvasGraph {
       return;
     }
 
-    this.#graphStore.updateNodePosition(
-      positionUpdate.targetNodeId,
-      positionUpdate.x,
-      positionUpdate.y,
-    );
-    this.#hoveredNodeId = positionUpdate.targetNodeId;
+    for (const update of positionUpdate) {
+      this.#graphStore.updateNodePosition(
+        update.targetNodeId,
+        update.x,
+        update.y,
+      );
+    }
+
+    this.#hoveredNodeId = this.#dragController.activeNodeId;
     this.#animationController.ensureRunning();
   };
 
   readonly #handlePointerUp = (event: PointerEvent): void => {
-    const draggedNodeId = this.#dragController.finishDrag(event);
+    const draggedNodeIds = this.#dragController.finishDrag(event);
 
-    if (!draggedNodeId) {
+    if (!draggedNodeIds) {
       return;
     }
 
-    this.#layoutPersistence?.persistNode(
-      this.#graphStore.getNode(draggedNodeId),
-      this.#graphStore.hasPersistentNodeId(draggedNodeId),
-    );
+    for (const draggedNodeId of draggedNodeIds) {
+      this.#layoutPersistence?.persistNode(
+        this.#graphStore.getNode(draggedNodeId),
+        this.#graphStore.hasPersistentNodeId(draggedNodeId),
+      );
+    }
+
     window.removeEventListener('pointermove', this.#handlePointerMove);
     window.removeEventListener('pointerup', this.#handlePointerUp);
     window.removeEventListener('pointercancel', this.#handlePointerUp);
@@ -484,6 +520,18 @@ export class CanvasGraph {
     return (
       [...nodes].reverse().find((node) => isPointInsideNode(node, x, y)) ?? null
     );
+  }
+
+  #getSelectedDragNodes(targetNode: CanvasNode): readonly CanvasNode[] {
+    const selectedNodes = this.#graphStore
+      .getNodes()
+      .filter(
+        (node) =>
+          node.id !== targetNode.id &&
+          this.#selectedNodeIds.has(node.id),
+      );
+
+    return [targetNode, ...selectedNodes];
   }
 
   #resolvePacketRoute(

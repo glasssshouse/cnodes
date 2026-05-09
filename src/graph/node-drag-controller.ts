@@ -10,10 +10,16 @@ type PointerLike = Readonly<{
 }>;
 
 type DragState = Readonly<{
-  offsetX: number;
-  offsetY: number;
+  nodes: readonly DragNodeState[];
   pointerId: number | null;
+  startPoint: DragPoint;
   targetNodeId: string;
+}>;
+
+type DragNodeState = Readonly<{
+  targetNodeId: string;
+  x: number;
+  y: number;
 }>;
 
 export type DragMove = Readonly<{
@@ -33,12 +39,28 @@ export class NodeDragController {
     return this.#dragState !== null;
   }
 
-  beginDrag(node: CanvasNode, point: DragPoint, event: PointerLike): void {
+  beginDrag(
+    nodeOrNodes: CanvasNode | readonly CanvasNode[],
+    point: DragPoint,
+    event: PointerLike,
+  ): void {
+    const nodes = Array.isArray(nodeOrNodes) ? nodeOrNodes : [nodeOrNodes];
+    const targetNode = nodes[0];
+
+    if (!targetNode) {
+      this.#dragState = null;
+      return;
+    }
+
     this.#dragState = {
-      offsetX: point.x - node.x,
-      offsetY: point.y - node.y,
+      nodes: nodes.map((node) => ({
+        targetNodeId: node.id,
+        x: node.x,
+        y: node.y,
+      })),
       pointerId: readPointerId(event),
-      targetNodeId: node.id,
+      startPoint: point,
+      targetNodeId: targetNode.id,
     };
   }
 
@@ -46,28 +68,31 @@ export class NodeDragController {
     this.#dragState = null;
   }
 
-  finishDrag(event: PointerLike): string | null {
+  finishDrag(event: PointerLike): readonly string[] | null {
     if (!this.#dragState || !matchesPointer(this.#dragState.pointerId, event)) {
       return null;
     }
 
-    const targetNodeId = this.#dragState.targetNodeId;
+    const targetNodeIds = this.#dragState.nodes.map((node) => node.targetNodeId);
 
     this.#dragState = null;
 
-    return targetNodeId;
+    return targetNodeIds;
   }
 
-  moveDrag(point: DragPoint, event: PointerLike): DragMove | null {
+  moveDrag(point: DragPoint, event: PointerLike): readonly DragMove[] | null {
     if (!this.#dragState || !matchesPointer(this.#dragState.pointerId, event)) {
       return null;
     }
 
-    return {
-      targetNodeId: this.#dragState.targetNodeId,
-      x: point.x - this.#dragState.offsetX,
-      y: point.y - this.#dragState.offsetY,
-    };
+    const deltaX = point.x - this.#dragState.startPoint.x;
+    const deltaY = point.y - this.#dragState.startPoint.y;
+
+    return this.#dragState.nodes.map((node) => ({
+      targetNodeId: node.targetNodeId,
+      x: node.x + deltaX,
+      y: node.y + deltaY,
+    }));
   }
 }
 

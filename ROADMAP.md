@@ -32,6 +32,7 @@
 - Packet routing through required waypoint nodes
 - Named ports and connect-to-specific-port API
 - Bidirectional packet travel over a single committed connection
+- Shift-click multi-node selection and group dragging
 - Release preparation script and CI workflow improvements
 - Documentation and usage examples
 
