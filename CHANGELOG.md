@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 - 2026-05-09
+
 - Added opt-in bidirectional packet travel with `connect(..., { travel: 'both' })`.
 - Updated packet routing, rendering, receive highlights, and the demo to support reverse traversal over a single connection.
 

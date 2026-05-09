@@ -1,6 +1,6 @@
 {
   "name": "@darbsen/cnodes",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Browser-first TypeScript library for interactive node canvases.",
   "license": "ISC",
   "type": "module",
