@@ -38,6 +38,8 @@ const NODE_BORDER_WIDTH = 1.5;
 const NODE_HOVER_BORDER_WIDTH = 2.5;
 const NODE_HIGHLIGHT_LINE_WIDTH = 4;
 const NODE_HIGHLIGHT_SHADOW_BLUR = 26;
+const NODE_SELECTED_BORDER_COLOR = '#38bdf8';
+const NODE_SELECTED_BORDER_WIDTH = 3;
 const NODE_SHADOW_BLUR = 18;
 const NODE_HOVER_SHADOW_BLUR = 22;
 const NODE_SHADOW_OFFSET_Y = 8;
@@ -63,6 +65,7 @@ type RenderInteractionState = {
   connectionDashOffset: number;
   hoveredNodeId: string | null;
   nodeHighlights: readonly NodeHighlight[];
+  selectedNodeIds: readonly string[];
 };
 
 type ConnectionLabelSpec = Readonly<{
@@ -227,6 +230,7 @@ export class CanvasRenderer {
         highlight,
       ]),
     );
+    const selectedNodeIds = new Set(interactionState.selectedNodeIds);
 
     for (const node of nodes) {
       const highlight = nodeHighlightById.get(node.id);
@@ -238,6 +242,7 @@ export class CanvasRenderer {
       this.#drawNodeSurface(
         node,
         interactionState.hoveredNodeId === node.id,
+        selectedNodeIds.has(node.id),
       );
 
       this.#drawLabel(node);
@@ -420,12 +425,22 @@ export class CanvasRenderer {
     this.#context.fill();
   }
 
-  #drawNodeSurface(node: CanvasNode, isHovered: boolean): void {
+  #drawNodeSurface(
+    node: CanvasNode,
+    isHovered: boolean,
+    isSelected: boolean,
+  ): void {
     const shadowBlur = isHovered ? NODE_HOVER_SHADOW_BLUR : NODE_SHADOW_BLUR;
-    const strokeStyle = isHovered
-      ? this.#theme.tokens.nodeHoverBorderColor
-      : this.#theme.tokens.nodeBorderColor;
-    const lineWidth = isHovered ? NODE_HOVER_BORDER_WIDTH : NODE_BORDER_WIDTH;
+    const strokeStyle = isSelected
+      ? NODE_SELECTED_BORDER_COLOR
+      : isHovered
+        ? this.#theme.tokens.nodeHoverBorderColor
+        : this.#theme.tokens.nodeBorderColor;
+    const lineWidth = isSelected
+      ? NODE_SELECTED_BORDER_WIDTH
+      : isHovered
+        ? NODE_HOVER_BORDER_WIDTH
+        : NODE_BORDER_WIDTH;
 
     this.#context.save();
     this.#context.fillStyle = node.color;

@@ -13,6 +13,7 @@ Supported in this alpha:
 - create nodes with stable ids, labels, descriptions, colors, and shapes
 - connect nodes with straight or bezier lines, arrows, labels, named ports, and animated stroke styles
 - send packets across direct, shortest-path, waypoint-constrained, and bidirectional routes
+- shift-click multiple nodes and drag them as a group
 - dispatch serializable packet actions from external event systems
 - persist dragged node positions and enable visible automatic ports
 
@@ -187,6 +188,7 @@ Use `theme.preset` for a built-in palette or `theme.tokens` to override individu
 
 - `createNode(kind)` returns a fluent builder and `.done()` commits the node.
 - `connect(...)` and `send(...)` accept either committed nodes or node ids.
+- Shift-click nodes to select or deselect them, then drag any selected node to move the selected group.
 - Define named ports with `.port(id, { side })`, then route connections with `sourcePort` and `targetPort`.
 - `send(...)` uses the shortest available path, throws when no path exists, accepts `via` to force intermediate nodes in order, and can traverse `travel: 'both'` connections in reverse.
 
