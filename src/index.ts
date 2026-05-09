@@ -6,6 +6,7 @@ export type {
   CanvasConnectionOptions,
   CanvasConnectionStyle,
   CanvasConnectionStyleOptions,
+  CanvasConnectionTravel,
   CanvasGraphAction,
   CanvasGraphActionResult,
   CanvasGraphOptions,

@@ -25,6 +25,7 @@ describe('connections', () => {
     expect(connection.id).toBeTypeOf('string');
     expect(connection.sourceNodeId).toBe(source.id);
     expect(connection.targetNodeId).toBe(target.id);
+    expect(connection.travel).toBe('forward');
     expect(connection.style).toEqual({
       arrow: 'end',
       color: '#64748b',
@@ -133,6 +134,21 @@ describe('connections', () => {
       line: 'bezier',
       stroke: 'animated-dotted',
     });
+  });
+
+  it('stores bidirectional packet travel from connect options', () => {
+    const context = createMockContext();
+    stubCanvasContext(context);
+
+    const graph = new CanvasGraph('app');
+    const source = graph.createNode('source').done();
+    const target = graph.createNode('target').done();
+
+    const connection = graph.connect(source, target, {
+      travel: 'both',
+    });
+
+    expect(connection.travel).toBe('both');
   });
 
   it('stores a non-empty connection label from connect options', () => {

@@ -6,13 +6,13 @@ Browser-first TypeScript library for interactive node canvases.
 
 ## Package Status
 
-`0.1.1` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet.
+`0.1.2` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet.
 
 Supported in this alpha:
 
 - create nodes with stable ids, labels, descriptions, colors, and shapes
 - connect nodes with straight or bezier lines, arrows, labels, named ports, and animated stroke styles
-- send packets across direct, shortest-path, and waypoint-constrained routes
+- send packets across direct, shortest-path, waypoint-constrained, and bidirectional routes
 - dispatch serializable packet actions from external event systems
 - persist dragged node positions and enable visible automatic ports
 
@@ -66,10 +66,15 @@ const target = graph
 graph.connect(ingress, target, {
   label: 'primary',
   sourcePort: 'out',
+  style: {
+    arrow: 'both',
+  },
   targetPort: 'in',
+  travel: 'both',
 });
 
 graph.send('ingress', 'target');
+graph.send('target', 'ingress');
 ```
 
 ### Dispatching External Events
@@ -127,6 +132,10 @@ const graph = new CanvasGraph('#app', {
 
 Graph-wide defaults for committed connections. Per-connection `style` overrides `arrow`, `color`, `line`, and `stroke`.
 
+`travel`
+
+Use `travel: 'both'` on a connection when packets should be able to traverse the same committed connection in either direction. The default is `'forward'`, so existing connections only route from source to target. `style.arrow` is visual only and does not change packet routing.
+
 `packet`
 
 Graph-wide defaults for packet rendering. Use `radius`, `trail`, and `trailLength` here. Per-send packet styling can override `color`, `radius`, `trail`, `trailColor`, `trailLength`, and `receiveHighlight`.
@@ -179,7 +188,7 @@ Use `theme.preset` for a built-in palette or `theme.tokens` to override individu
 - `createNode(kind)` returns a fluent builder and `.done()` commits the node.
 - `connect(...)` and `send(...)` accept either committed nodes or node ids.
 - Define named ports with `.port(id, { side })`, then route connections with `sourcePort` and `targetPort`.
-- `send(...)` uses the shortest directed path by default, throws when no path exists, and accepts `via` to force intermediate nodes in order.
+- `send(...)` uses the shortest available path, throws when no path exists, accepts `via` to force intermediate nodes in order, and can traverse `travel: 'both'` connections in reverse.
 
 ### `layoutPersistence`
 

@@ -1,5 +1,6 @@
 import { isPointInsideNode } from './core/geometry';
 import { GraphStore, type PacketReceiveEvent } from './core/graph-store';
+import type { PacketRouteSegment } from './core/pathfinding';
 import { NodeBuilder } from './fluent/node-builder';
 import { AnimationController } from './graph/animation-controller';
 import { CanvasSurface } from './graph/canvas-surface';
@@ -129,6 +130,7 @@ export class CanvasGraph {
       style: resolveConnectionStyle(this.#defaultConnectionStyle, options),
       ...(targetPortId ? { targetPortId } : {}),
       targetNodeId: targetNode.id,
+      travel: options.travel ?? 'forward',
     });
   }
 
@@ -142,7 +144,7 @@ export class CanvasGraph {
     const waypointNodes =
       options.via?.map((nodeRef) => this.#requireNode(nodeRef, 'Waypoint')) ??
       [];
-    const connectionIds = this.#resolvePacketConnectionIds(
+    const route = this.#resolvePacketRoute(
       sourceNode,
       targetNode,
       waypointNodes,
@@ -152,7 +154,7 @@ export class CanvasGraph {
       sourceNode.id,
       targetNode.id,
       performance.now(),
-      connectionIds,
+      route,
       options.packet,
     );
 
@@ -484,28 +486,28 @@ export class CanvasGraph {
     );
   }
 
-  #resolvePacketConnectionIds(
+  #resolvePacketRoute(
     sourceNode: CanvasNode,
     targetNode: CanvasNode,
     waypointNodes: readonly CanvasNode[],
-  ): string[] {
+  ): PacketRouteSegment[] {
     if (waypointNodes.length === 0) {
-      const connectionIds = this.#graphStore.findShortestPath(
+      const route = this.#graphStore.findShortestPath(
         sourceNode.id,
         targetNode.id,
       );
 
-      if (!connectionIds) {
+      if (!route) {
         throw new Error(
           `No path exists from "${sourceNode.id}" to "${targetNode.id}".`,
         );
       }
 
-      return connectionIds;
+      return route;
     }
 
     const routeNodes = [sourceNode, ...waypointNodes, targetNode];
-    const connectionIds: string[] = [];
+    const route: PacketRouteSegment[] = [];
 
     for (let index = 0; index < routeNodes.length - 1; index += 1) {
       const segmentSource = routeNodes[index];
@@ -515,21 +517,21 @@ export class CanvasGraph {
         continue;
       }
 
-      const segmentConnectionIds = this.#graphStore.findShortestPath(
+      const segmentRoute = this.#graphStore.findShortestPath(
         segmentSource.id,
         segmentTarget.id,
       );
 
-      if (!segmentConnectionIds) {
+      if (!segmentRoute) {
         throw new Error(
           `No path exists from "${segmentSource.id}" to "${segmentTarget.id}" while resolving packet route.`,
         );
       }
 
-      connectionIds.push(...segmentConnectionIds);
+      route.push(...segmentRoute);
     }
 
-    return connectionIds;
+    return route;
   }
 
   #requireNode(nodeRef: CanvasNodeRef, label: string): CanvasNode {

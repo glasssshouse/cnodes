@@ -1,4 +1,9 @@
-import type { CanvasConnectionStyle, CanvasNodePort, CanvasShape } from './public';
+import type {
+  CanvasConnectionStyle,
+  CanvasConnectionTravel,
+  CanvasNodePort,
+  CanvasShape,
+} from './public';
 
 export type CanvasConnectionDraft = {
   label?: string;
@@ -7,6 +12,7 @@ export type CanvasConnectionDraft = {
   style: CanvasConnectionStyle;
   targetPortId?: string;
   targetNodeId: string;
+  travel: CanvasConnectionTravel;
 };
 
 export type CanvasNodeDraft = {

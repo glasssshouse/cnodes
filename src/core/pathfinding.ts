@@ -1,17 +1,22 @@
 import type { CanvasConnection } from '../types/public';
 
+export type PacketRouteSegment = Readonly<{
+  connectionId: string;
+  reversed: boolean;
+}>;
+
 export function findShortestConnectionPath(
   connections: readonly CanvasConnection[],
   sourceNodeId: string,
   targetNodeId: string,
-): string[] | null {
+): PacketRouteSegment[] | null {
   if (sourceNodeId === targetNodeId) {
     return [];
   }
 
-  const queue: Array<{ connectionIds: string[]; nodeId: string }> = [{
-    connectionIds: [],
+  const queue: Array<{ nodeId: string; route: PacketRouteSegment[] }> = [{
     nodeId: sourceNodeId,
+    route: [],
   }];
   const visited = new Set([sourceNodeId]);
 
@@ -22,30 +27,57 @@ export function findShortestConnectionPath(
       break;
     }
 
-    for (const connection of connections) {
-      if (connection.sourceNodeId !== entry.nodeId) {
-        continue;
-      }
-
-      const nextNodeId = connection.targetNodeId;
+    for (const edge of getConnectionEdges(connections, entry.nodeId)) {
+      const nextNodeId = edge.nodeId;
 
       if (visited.has(nextNodeId)) {
         continue;
       }
 
-      const nextConnectionIds = [...entry.connectionIds, connection.id];
+      const nextRoute = [...entry.route, edge.segment];
 
       if (nextNodeId === targetNodeId) {
-        return nextConnectionIds;
+        return nextRoute;
       }
 
       visited.add(nextNodeId);
       queue.push({
-        connectionIds: nextConnectionIds,
         nodeId: nextNodeId,
+        route: nextRoute,
       });
     }
   }
 
   return null;
+}
+
+function getConnectionEdges(
+  connections: readonly CanvasConnection[],
+  nodeId: string,
+): Array<{ nodeId: string; segment: PacketRouteSegment }> {
+  const edges: Array<{ nodeId: string; segment: PacketRouteSegment }> = [];
+
+  for (const connection of connections) {
+    if (connection.sourceNodeId === nodeId) {
+      edges.push({
+        nodeId: connection.targetNodeId,
+        segment: {
+          connectionId: connection.id,
+          reversed: false,
+        },
+      });
+    }
+
+    if (connection.travel === 'both' && connection.targetNodeId === nodeId) {
+      edges.push({
+        nodeId: connection.sourceNodeId,
+        segment: {
+          connectionId: connection.id,
+          reversed: true,
+        },
+      });
+    }
+  }
+
+  return edges;
 }

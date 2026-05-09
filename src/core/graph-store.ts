@@ -5,12 +5,12 @@ import type {
   CanvasPacket,
   CanvasPacketStyleOptions,
 } from '../types/public';
-import { findShortestConnectionPath } from './pathfinding';
+import { findShortestConnectionPath, type PacketRouteSegment } from './pathfinding';
 
 export type RenderPacket = Readonly<{
-  connectionIds: readonly string[];
   id: string;
   progress: number;
+  route: readonly PacketRouteSegment[];
   status: CanvasPacket['status'];
   style?: CanvasPacketStyleOptions;
 }>;
@@ -21,10 +21,10 @@ export type PacketReceiveEvent = Readonly<{
 }>;
 
 type StoredPacket = {
-  connectionIds: string[];
   id: string;
   progress: number;
   reachedHopCount: number;
+  route: PacketRouteSegment[];
   routeTargetNodeIds: string[];
   sourceNodeId: string;
   startedAt: number;
@@ -90,19 +90,17 @@ export class GraphStore {
     sourceNodeId: string,
     targetNodeId: string,
     startedAt: number,
-    connectionIds: string[],
+    route: PacketRouteSegment[],
     style?: CanvasPacketStyleOptions,
   ): CanvasPacket {
-    const routeTargetNodeIds = connectionIds.map(
-      (connectionId) =>
-        this.#connections.find((connection) => connection.id === connectionId)
-          ?.targetNodeId ?? targetNodeId,
+    const routeTargetNodeIds = route.map((segment) =>
+      getSegmentTargetNodeId(this.#connections, segment) ?? targetNodeId,
     );
     const committedPacket: StoredPacket = {
-      connectionIds,
       id: `packet-${++this.#packetCount}`,
       progress: 0,
       reachedHopCount: 0,
+      route,
       routeTargetNodeIds,
       sourceNodeId,
       startedAt,
@@ -124,7 +122,7 @@ export class GraphStore {
         continue;
       }
 
-      const hopCount = Math.max(packet.connectionIds.length, 1);
+      const hopCount = Math.max(packet.route.length, 1);
       const totalDurationMs = hopCount * durationMs;
 
       packet.progress = Math.min((timestamp - packet.startedAt) / totalDurationMs, 1);
@@ -181,7 +179,10 @@ export class GraphStore {
     return this.#nodes.some((node) => node.id === id && node.explicitId);
   }
 
-  findShortestPath(sourceNodeId: string, targetNodeId: string): string[] | null {
+  findShortestPath(
+    sourceNodeId: string,
+    targetNodeId: string,
+  ): PacketRouteSegment[] | null {
     return findShortestConnectionPath(this.#connections, sourceNodeId, targetNodeId);
   }
 
@@ -222,7 +223,7 @@ function getPacketReceiveEvents(
   const receiveEvents: PacketReceiveEvent[] = [];
   const startHopIndex =
     packet.style?.receiveHighlight === 'target'
-      ? packet.connectionIds.length - 1
+      ? packet.route.length - 1
       : packet.reachedHopCount;
 
   for (
@@ -239,4 +240,17 @@ function getPacketReceiveEvents(
   }
 
   return receiveEvents;
+}
+
+function getSegmentTargetNodeId(
+  connections: readonly CanvasConnection[],
+  segment: PacketRouteSegment,
+): string | null {
+  const connection = connections.find((entry) => entry.id === segment.connectionId);
+
+  if (!connection) {
+    return null;
+  }
+
+  return segment.reversed ? connection.sourceNodeId : connection.targetNodeId;
 }

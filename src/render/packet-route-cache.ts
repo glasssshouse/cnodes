@@ -1,4 +1,5 @@
 import type { Point } from '../core/geometry';
+import type { PacketRouteSegment } from '../core/pathfinding';
 import type { CanvasNode } from '../types/public';
 import type { ConnectionRenderModel } from './connection-render-model';
 import { buildPacketRoutePoints } from './packet-route-points';
@@ -14,26 +15,28 @@ export class PacketRouteCache {
   getRoutePoints(
     nodeById: ReadonlyMap<string, CanvasNode>,
     connectionRenderModelById: ReadonlyMap<string, ConnectionRenderModel>,
-    connectionIds: readonly string[],
+    route: readonly PacketRouteSegment[],
   ): readonly Point[] {
-    if (connectionIds.length === 0) {
+    if (route.length === 0) {
       return [];
     }
 
-    const signature = getPacketRouteSignature(nodeById, connectionRenderModelById, connectionIds);
+    const signature = getPacketRouteSignature(nodeById, connectionRenderModelById, route);
 
     if (!signature) {
       return [];
     }
 
-    const cacheKey = connectionIds.join('|');
+    const cacheKey = route
+      .map((segment) => `${segment.connectionId}:${segment.reversed ? 'reverse' : 'forward'}`)
+      .join('|');
     const cachedRoute = this.#cache.get(cacheKey);
 
     if (cachedRoute && cachedRoute.signature === signature) {
       return cachedRoute.routePoints;
     }
 
-    const routePoints = buildPacketRoutePoints(nodeById, connectionRenderModelById, connectionIds);
+    const routePoints = buildPacketRoutePoints(nodeById, connectionRenderModelById, route);
 
     this.#cache.set(cacheKey, {
       routePoints,
@@ -47,30 +50,35 @@ export class PacketRouteCache {
 function getPacketRouteSignature(
   nodeById: ReadonlyMap<string, CanvasNode>,
   connectionRenderModelById: ReadonlyMap<string, ConnectionRenderModel>,
-  connectionIds: readonly string[],
+  route: readonly PacketRouteSegment[],
 ): string | null {
   const signatureParts: string[] = [];
 
-  for (const [index, connectionId] of connectionIds.entries()) {
-    const renderModel = connectionRenderModelById.get(connectionId);
+  for (const [index, segment] of route.entries()) {
+    const renderModel = connectionRenderModelById.get(segment.connectionId);
 
     if (!renderModel) {
       return null;
     }
 
-    signatureParts.push(`${connectionId}:${renderModel.signature}`);
+    signatureParts.push(
+      `${segment.connectionId}:${segment.reversed ? 'reverse' : 'forward'}:${renderModel.signature}`,
+    );
 
     if (index === 0) {
       continue;
     }
 
-    const sourceNode = nodeById.get(renderModel.sourceNodeId);
+    const sourceNodeId = segment.reversed
+      ? renderModel.targetNodeId
+      : renderModel.sourceNodeId;
+    const sourceNode = nodeById.get(sourceNodeId);
 
     if (!sourceNode) {
       return null;
     }
 
-    signatureParts.push(`node:${renderModel.sourceNodeId}:${sourceNode.x}|${sourceNode.y}`);
+    signatureParts.push(`node:${sourceNodeId}:${sourceNode.x}|${sourceNode.y}`);
   }
 
   return signatureParts.join('||');

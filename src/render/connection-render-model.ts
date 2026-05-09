@@ -46,6 +46,7 @@ export type ConnectionRenderModel = Readonly<{
   signature: string;
   sourceNodeId: string;
   targetPort: ConnectionPort | null;
+  targetNodeId: string;
   visiblePath: ConnectionPath;
 }>;
 
@@ -97,6 +98,7 @@ export class ConnectionRenderCache {
         signature,
         sourceNodeId: connection.sourceNodeId,
         targetPort: cachedModel.targetPort,
+        targetNodeId: connection.targetNodeId,
         visiblePath: cachedModel.visiblePath,
       };
     }
@@ -154,6 +156,7 @@ export class ConnectionRenderCache {
       signature,
       sourceNodeId: connection.sourceNodeId,
       targetPort: targetPortAnchor,
+      targetNodeId: connection.targetNodeId,
       visiblePath,
     };
   }

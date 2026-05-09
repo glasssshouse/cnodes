@@ -10,6 +10,7 @@ export type CanvasConnectionStrokeStyle =
   | 'dotted'
   | 'animated'
   | 'animated-dotted';
+export type CanvasConnectionTravel = 'forward' | 'both';
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
 export type CanvasRenderCause =
   | 'connection-animation'
@@ -63,6 +64,7 @@ export type CanvasConnectionOptions = Readonly<{
   sourcePort?: string;
   style?: CanvasConnectionStyleOptions;
   targetPort?: string;
+  travel?: CanvasConnectionTravel;
 }>;
 
 export type CanvasGraphOptions = Readonly<{
@@ -97,6 +99,7 @@ export type CanvasConnection = Readonly<{
   style: CanvasConnectionStyle;
   targetPortId?: string;
   targetNodeId: string;
+  travel: CanvasConnectionTravel;
 }>;
 
 export type CanvasPacket = Readonly<{

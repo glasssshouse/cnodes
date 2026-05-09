@@ -137,6 +137,73 @@ describe('packets', () => {
     );
   });
 
+  it('keeps forward-only connections unavailable for reverse packet travel', () => {
+    const context = createMockContext();
+    stubAnimationFrame();
+    stubCanvasContext(context);
+
+    const graph = new CanvasGraph('app');
+    const source = graph.createNode('source').done();
+    const target = graph.createNode('target').done();
+
+    graph.connect(source, target);
+
+    expect(() => graph.send(target, source)).toThrowError(
+      `No path exists from "${target.id}" to "${source.id}".`,
+    );
+  });
+
+  it('sends packets in reverse over a bidirectional connection', () => {
+    const context = createMockContext();
+    const animation = stubAnimationFrame();
+    stubCanvasContext(context);
+
+    const graph = new CanvasGraph('app');
+    const source = graph.createNode('source').done();
+    const target = graph.createNode('target').done();
+
+    graph.connect(source, target, {
+      travel: 'both',
+    });
+
+    const packet = graph.send(target, source);
+
+    expect(packet.sourceNodeId).toBe(target.id);
+    expect(packet.targetNodeId).toBe(source.id);
+    expect(packet.progress).toBe(0);
+    expect(packet.status).toBe('running');
+    expect(animation.pending()).toBe(1);
+  });
+
+  it('routes through waypoints with reversed bidirectional segments', () => {
+    const context = createMockContext();
+    const animation = stubAnimationFrame();
+    stubCanvasContext(context);
+
+    const graph = new CanvasGraph('app');
+    const source = graph.createNode('source').id('source').at(100, 120).done();
+    const middle = graph.createNode('middle').id('middle').at(280, 120).done();
+    const target = graph.createNode('target').id('target').at(460, 120).done();
+
+    graph.connect(middle, source, {
+      travel: 'both',
+    });
+    graph.connect(target, middle, {
+      travel: 'both',
+    });
+
+    const packet = graph.send(source, target, {
+      via: [middle],
+    });
+
+    vi.clearAllMocks();
+    animation.step(900);
+
+    expect(packet.sourceNodeId).toBe('source');
+    expect(packet.targetNodeId).toBe('target');
+    expect(packet.progress).toBeCloseTo(0.5);
+  });
+
   it('resolves matching stable ids even when packet endpoints come from another graph', () => {
     const context = createMockContext();
     stubAnimationFrame();

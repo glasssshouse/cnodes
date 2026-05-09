@@ -101,4 +101,36 @@ describe('canvas renderer receive highlights', () => {
       }),
     );
   });
+
+  it('highlights the actual reached node during reverse packet travel', () => {
+    const context = createMockContext();
+    const animation = stubAnimationFrame();
+    stubCanvasContext(context);
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+
+    const graph = new CanvasGraph('app');
+    const source = graph.createNode('source').at(100, 120).done();
+    const target = graph.createNode('target').at(280, 120).done();
+
+    graph.connect(source, target, {
+      travel: 'both',
+    });
+    graph.send(target, source, {
+      packet: {
+        color: '#38bdf8',
+        receiveHighlight: 'target',
+      },
+    });
+
+    vi.clearAllMocks();
+    context.strokeRecords.length = 0;
+    animation.step(900);
+
+    expect(context.strokeRecords).toContainEqual(
+      expect.objectContaining({
+        shadowColor: '#38bdf8',
+        strokeStyle: '#38bdf8',
+      }),
+    );
+  });
 });

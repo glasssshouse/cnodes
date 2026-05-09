@@ -31,6 +31,7 @@
 - Transport-agnostic inbound graph actions for external event streams
 - Packet routing through required waypoint nodes
 - Named ports and connect-to-specific-port API
+- Bidirectional packet travel over a single committed connection
 - Release preparation script and CI workflow improvements
 - Documentation and usage examples
 

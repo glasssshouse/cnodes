@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added opt-in bidirectional packet travel with `connect(..., { travel: 'both' })`.
+- Updated packet routing, rendering, receive highlights, and the demo to support reverse traversal over a single connection.
+
 ## 0.1.2 - 2026-05-02
 
 - Added named node ports with `.port(id, { side })` and `connect(..., { sourcePort, targetPort })`.

@@ -34,8 +34,11 @@ describe('GraphStore', () => {
         stroke: 'solid',
       },
       targetNodeId: target.id,
+      travel: 'forward',
     });
-    const packet = graphStore.addPacket(source.id, target.id, 0, [connection.id]);
+    const packet = graphStore.addPacket(source.id, target.id, 0, [
+      { connectionId: connection.id, reversed: false },
+    ]);
 
     graphStore.advancePackets(900, 900);
 

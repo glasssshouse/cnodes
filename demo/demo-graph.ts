@@ -31,6 +31,8 @@ type DemoTrafficRouteDefinition = Readonly<{
   featured?: boolean;
   label: string;
   packet?: TrafficRoute['action']['packet'];
+  sourceNodeKey?: DemoGraphNodeKey;
+  targetNodeKey?: DemoGraphNodeKey;
   viaNodeKeys?: readonly DemoGraphNodeKey[];
 }>;
 
@@ -45,6 +47,11 @@ const DEMO_TRAFFIC_ROUTE_DEFINITIONS: readonly DemoTrafficRouteDefinition[] = [
   {
     label: 'Worker route',
     viaNodeKeys: ['router', 'balancer', 'worker'],
+  },
+  {
+    label: 'Return route',
+    sourceNodeKey: 'balancer',
+    targetNodeKey: 'router',
   },
   {
     featured: true,
@@ -175,6 +182,7 @@ export function buildDemoGraph(
       stroke: resolveDemoStroke('animated', options.animatedConnections),
     },
     targetPort: 'in',
+    travel: 'both',
   });
   graph.connect(balancer, cache, {
     label: 'cache',
@@ -274,11 +282,14 @@ function resolveTrafficRoute(
   demoGraph: DemoGraph,
   definition: DemoTrafficRouteDefinition,
 ): TrafficRoute {
+  const sourceNode = demoGraph[definition.sourceNodeKey ?? 'ingress'];
+  const targetNode = demoGraph[definition.targetNodeKey ?? 'target'];
+
   return {
     action: {
       ...(definition.packet ? { packet: definition.packet } : {}),
-      sourceNodeId: demoGraph.ingress.id,
-      targetNodeId: demoGraph.target.id,
+      sourceNodeId: sourceNode.id,
+      targetNodeId: targetNode.id,
       type: 'packet:send',
       ...(definition.viaNodeKeys
         ? {

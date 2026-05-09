@@ -199,6 +199,30 @@ describe('canvas renderer packet rendering', () => {
     expect(context.arc).toHaveBeenNthCalledWith(1, 190, 180, 6, 0, Math.PI * 2);
   });
 
+  it('moves a reverse packet from target to source over a bidirectional connection', () => {
+    const context = createMockContext();
+    const animation = stubAnimationFrame();
+    stubCanvasContext(context);
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+
+    const graph = new CanvasGraph('app');
+    const source = graph.createNode('source').at(100, 120).done();
+    const target = graph.createNode('target').at(280, 120).done();
+
+    graph.connect(source, target, {
+      style: {
+        arrow: 'none',
+      },
+      travel: 'both',
+    });
+    graph.send(target, source);
+
+    vi.clearAllMocks();
+    animation.step(225);
+
+    expect(context.arc).toHaveBeenNthCalledWith(1, 205, 120, 6, 0, Math.PI * 2);
+  });
+
   it('moves packet position along the bezier path when enabled', () => {
     const context = createMockContext();
     const animation = stubAnimationFrame();

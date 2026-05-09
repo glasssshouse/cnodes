@@ -190,6 +190,14 @@ describe('demo graph', () => {
         },
         label: 'Worker route',
       },
+      {
+        action: {
+          sourceNodeId: 'balancer',
+          targetNodeId: 'router',
+          type: 'packet:send',
+        },
+        label: 'Return route',
+      },
     ]);
   });
 

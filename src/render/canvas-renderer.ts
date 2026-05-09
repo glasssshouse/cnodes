@@ -195,7 +195,7 @@ export class CanvasRenderer {
       const routePoints = this.#packetRouteCache.getRoutePoints(
         nodeById,
         connectionRenderModelById,
-        packet.connectionIds,
+        packet.route,
       );
 
       if (routePoints.length < 2) {
