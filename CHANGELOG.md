@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-05-09
+
 - Added shift-click node selection so multiple selected nodes can be dragged together.
 - Updated layout persistence to save every explicit-id node moved by a selected group drag.
 

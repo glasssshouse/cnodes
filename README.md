@@ -6,7 +6,7 @@ Browser-first TypeScript library for interactive node canvases.
 
 ## Package Status
 
-`0.2.0` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet.
+`0.3.0` is an early public release. The current API is ready for use and feedback, but it is not a finalized `1.0` contract yet.
 
 Supported in this alpha:
 
